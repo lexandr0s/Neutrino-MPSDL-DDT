@@ -1,0 +1,54 @@
+#!/bin/sh
+
+im()
+{
+	modname=$1
+	modsane=${1//-/_}
+	params=$(eval echo \$OPT_${modsane})
+	shift
+	file=/lib/modules/${KVER}/${modname}.ko
+	# own built modules are in /lib/modules/$KVER/kernel/... subdirectories
+	if test -e $file; then
+		echo "overriding from $file..."
+		/sbin/insmod $file ${params:-$@}
+	else
+		/sbin/modprobe $modname $@
+	fi
+}
+
+case $1 in
+start)
+	read dummy dummy KVER dummy < /proc/version
+	# set all "option foo ..." as OPT_foo="..." variables
+	eval $(sed -n "/^options\s/{
+		s/^options\s\(\S\+\)\s\(.*\)\$/OPT_\1=\"\2\"/;
+		s/^\(\S\+\)-/\1_/g;
+		s/^\(\S\+\)-/\1_/g;
+		s/^\(\S\+\)-/\1_/g;
+		p }" /etc/modprobe.conf)
+	im aotom
+	WAKEUP=$(spark_fp -g)
+	REASON=$?
+	echo "wakeup reason: $REASON ($WAKEUP)"
+	test $REASON = 3 && touch /tmp/.timer_wakeup
+	wait_for_device /dev/rtc0 2
+	hwclock --hctosys --localtime
+	;;
+stop)
+	hwclock --systohc --localtime
+	read RTC_NOW < /sys/class/rtc/rtc0/since_epoch
+	NOW=$(date +%s)
+	OFFSET=$((RTC_NOW - NOW)) # offset between UTC and localtime
+	echo 0 > /sys/class/rtc/rtc0/wakealarm
+	test -e /tmp/.timer || exit 0
+	read WAKEUP < /tmp/.timer
+	WAKEUP=$((WAKEUP + OFFSET))
+	echo "setting wakeup time to $WAKEUP (NOW: $RTC_NOW, OFFSET: $OFFSET)"
+	if test $WAKEUP -lt $((RTC_NOW + 30)); then
+		WAKEUP=$((RTC_NOW + 30))
+		echo "correcting WAKEUP to $WAKEUP"
+	fi
+	echo $WAKEUP > /sys/class/rtc/rtc0/wakealarm
+	# dmesg | tail -2
+	;;
+esac

@@ -1,0 +1,48 @@
+# /etc/profile
+#
+# DON'T EDIT THIS FILE. USE /etc/profile.local INSTEAD!
+# /etc/profile will get overwritten on package update!
+#
+
+# /var/bin has highest priority...
+PATH=/var/bin
+
+# /opt/*/bin and /opt/*/sbin come next
+_tmp=$(echo /opt/*/bin)
+if test "$_tmp" != "/opt/*/bin"; then
+	PATH=${PATH}:${_tmp// /:}
+fi
+_tmp=$(echo /opt/*/sbin)
+if test "$_tmp" != "/opt/*/sbin"; then
+	PATH=${PATH}:${_tmp// /:}
+fi
+
+# default /bin and /sbin come last
+PATH=${PATH}:/bin:/sbin
+
+# if ldconfig did not work, set up LD_LIBRARY_PATH
+if test -e /etc/ld.so.conf -a ! -e /etc/ld.so.cache; then
+	_tmp=$(cat /etc/ld.so.conf)
+	if test "$_tmp"; then
+		export LD_LIBRARY_PATH=${_tmp//[[:space:]]/:}
+	fi
+fi
+
+unset _tmp
+
+# hostname in prompt...
+PS1='\\h:\\w \\$ '
+
+alias l='ls -al'
+alias ll='ls -l'
+alias dir='ls -lA'
+alias ..='cd ..'
+alias ldd='/lib/ld-*.so --list'
+alias reboot='touch /tmp/.reboot; /sbin/reboot'
+
+# aliases for old farts who can't remember new names :)
+alias fcp='flashcp -v'
+alias eraseall=flash_eraseall
+
+# Add your own modifications to profile.local!
+test -e /etc/profile.local && . /etc/profile.local

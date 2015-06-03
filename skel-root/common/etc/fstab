@@ -1,0 +1,5 @@
+# enter stuff you want mounted here. This gets
+# mounted early during system boot
+#
+# file system	mount pt	type	options		dump	pass
+

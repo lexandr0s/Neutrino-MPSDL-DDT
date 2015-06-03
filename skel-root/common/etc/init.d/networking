@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# manage network interfaces and configure some networking options
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+case "$1" in
+    start)
+	echo -n "Configuring network interfaces... "
+	grep -q '^auto lo' /etc/network/interfaces && sed -i '/^auto lo/d' /etc/network/interfaces
+	ifup lo 2>/dev/null
+	ifup -a && IFPLUGD_OPTS=-p || ifdown eth0 # will be up'ed by ifplugd
+	if  type ifplugd >/dev/null 2>&1; then
+		echo -n "Starting ifplugd... "
+		ifplugd -F $IFPLUGD_OPTS -q
+	fi
+	echo "done."
+	;;
+    stop)
+	echo -n "Deconfiguring network interfaces... "
+	ifdown -a
+	if  type ifplugd >/dev/null 2>&1; then
+		ifplugd -k
+	fi
+	echo "done."
+	;;
+    force-reload|restart)
+	echo "Reconfiguring network interfaces... "
+	$0 stop
+	$0 start
+	echo "...done."
+	;;
+esac
+
+exit 0
+

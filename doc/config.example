@@ -1,0 +1,70 @@
+# The type of box to build for.
+# either "tripledragon", "coolstream" or "spark"
+# default (if empty) is "tripledragon"
+#PLATFORM=tripledragon
+
+# for the tripledragon platform: the version of the compiler to build
+# "old" => build gcc 3.4.5 / glibc 2.3.6 with crosstool-0.43
+# "new" => build gcc 4.5.2 / eglibc 2.12 with crosstool-ng 1.10.0
+# defaults to "new". Do not use "old".
+#TD_COMPILER=new
+
+# if you want to use your precompiled toolchain, define those variables:
+# this will skip the building of our own compiler/glibc combination!
+#
+# ONLY CHANGE THOSE VARIABLES IF YOU KNOW WHAT YOU ARE DOING!
+#
+# do not set this if you want to build a toolchain with these makefiles.
+#CROSS_DIR=/opt/cross
+#TARGET=arm-linux-gnueabi
+
+# if /usr/share/libtool/config/config.guess does not supply a valid
+# build type, specify it here. THIS IS A WORKAROUND. Use with caution.
+# BUILD=x86_64-unknown-linux-gnu
+
+#
+#
+# set the flavour of neutrino you want to build
+# "neutrino-hd":              use master branch of git://gitorious.org/neutrino-hd/neutrino-hd.git
+# "neutrino-hd-tripledragon": use git://gitorious.org/neutrino-hd/neutrino-hd-tripledragon.git
+# "neutrino-mp":              use git://gitorious.org/neutrino-mp/neutrino-mp.git
+# default: neutrino-mp
+#FLAVOUR=neutrino-mp
+
+#
+# configure the directory where "make dist-pkgs"
+# PKG_DEST_DIR = /srv/www/dist/$(PLATFORM)
+
+#
+# the name used to replace "@MAINT@" in the opkg control files
+# defaults to your name from the passwd GECOS field
+#
+# MAINTAINER = Johnny Walker
+
+#
+# if you want to use a different source directory, set N_HD_SOURCE here.
+# e.g. check out some test branch to source/nhd-test, then uncomment the
+# following. WARNING: "make update-neutrino" will cease to work, you'll
+# have to do this manually.
+#
+# N_HD_SOURCE = $(BASE_DIR)/source/nhd-test
+
+#
+# if you cannot check out via the git:// protocol (e.g. behind a http
+# proxy...) but need to use http, then uncomment this
+#
+# this also affects the use of svn:// or http:// for the crosstool builds
+#
+# GIT_PROTOCOL = http
+
+
+# if you want to use more than default build options for neutrino
+# you can add more build options, here for example, activate the build of UPNP-Browser
+#
+# LOCAL_NEUTRINO_BUILD_OPTIONS = --enable-upnp
+
+
+# for more commpiler flags
+# you can add more flags, here for example, add the pedantic option
+#
+# LOCAL_NEUTRINO_CFLAGS = -pedantic

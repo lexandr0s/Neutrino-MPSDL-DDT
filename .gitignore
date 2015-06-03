@@ -1,0 +1,16 @@
+build_tmp
+ccache
+cross
+deps
+download
+hack
+host
+root
+store
+test
+source
+local
+Makefile.local
+.ignore
+config
+*~

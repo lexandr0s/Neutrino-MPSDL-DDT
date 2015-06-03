@@ -1,0 +1,32 @@
+#!/bin/sh
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+# the default "vt102" is crap.
+export TERM=linux
+
+mount -t proc proc /proc
+# mount -t devfs dev /dev # is already mounted by the kernel
+mount -t sysfs sys /sys
+mount -t tmpfs tmp /tmp
+mount -t devpts devpts /dev/pts
+mount -t usbfs usbfs /proc/bus/usb
+# directory for mounting disks
+mkdir /tmp/media
+rm -f /media		# don't remove if it is a directory
+ln -s /tmp/media /	# /media points to /tmp/media/
+# manually create nodes for crappy drivers
+/sbin/mknodes
+# update library cache before running init scripts
+if [ ! -e /etc/ld.so.cache ] || [ /etc/ld.so.conf -nt /etc/ld.so.cache ]; then
+	ldconfig 2>/dev/null
+fi
+# first boot after flashing...
+opkg-cl configure
+
+# /etc/profile sets up $PATH etc.
+. /etc/profile
+
+. /etc/init.d/functions
+
+run_initscripts start
+
+test -e /etc/init.d/rcS.local && . /etc/init.d/rcS.local

@@ -1,0 +1,14 @@
+#!/bin/sh
+CONF=/opt/pkg/etc/vsftpd.conf
+PATH=/opt/pkg/sbin:$PATH
+export PATH
+
+case $1 in
+	start)
+		chown 0:0 $CONF
+		vsftpd $CONF
+		;;
+	stop)
+		killall vsftpd # lame...
+		;;
+esac

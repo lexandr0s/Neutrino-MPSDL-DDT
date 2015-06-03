@@ -1,0 +1,126 @@
+####################################################
+# Makefile for building native neutrino / libstb-hal
+# (C) 2012,2013 Stefan Seyfried
+#
+# prerequisite packages need to be installed,
+# no checking is done for that
+####################################################
+
+SOURCE = $(PWD)/source
+OBJ = $(PWD)/obj
+DEST = $(PWD)/root
+
+LH_SRC = $(SOURCE)/libstb-hal
+LH_OBJ = $(OBJ)/libstb-hal
+N_SRC  = $(SOURCE)/neutrino-mp
+N_OBJ  = $(OBJ)/neutrino-mp
+
+CFLAGS =  -funsigned-char -g -W -Wall -Wshadow -O2
+CFLAGS += -rdynamic
+CFLAGS += -DPEDANTIC_VALGRIND_SETUP
+CFLAGS += -DDYNAMIC_LUAPOSIX
+CFLAGS += -DTEST_MENU
+### enable --as-needed for catching more build problems...
+CFLAGS += -Wl,--as-needed
+
+### in case some libs are installed in $(DEST) (e.g. dvbsi++ or ffmpeg)
+CFLAGS += -I$(DEST)/include
+CFLAGS += -L$(DEST)/lib
+PKG_CONFIG_PATH = $(DEST)/lib/pkgconfig
+export PKG_CONFIG_PATH
+
+CXXFLAGS = $(CFLAGS)
+
+export CFLAGS CXXFLAGS
+
+# first target is default...
+default: neutrino
+	make run
+
+run:
+	gdb -ex run $(DEST)/bin/neutrino
+
+neutrino: $(N_OBJ)/config.status
+	-rm $(N_OBJ)/src/neutrino # force relinking on changed libstb-hal
+	$(MAKE) -C $(N_OBJ) install
+
+$(LH_OBJ)/libstb-hal.a: libstb-hal
+libstb-hal: $(LH_OBJ)/config.status
+	$(MAKE) -C $(LH_OBJ) install
+
+$(LH_OBJ)/config.status: | $(LH_OBJ) $(LH_SRC)
+	$(LH_SRC)/autogen.sh
+	set -e; cd $(LH_OBJ); \
+		$(LH_SRC)/configure --enable-maintainer-mode \
+			--prefix=$(DEST) --enable-shared=no
+
+$(N_OBJ)/config.status: | $(N_OBJ) $(N_SRC) $(LH_OBJ)/libstb-hal.a
+	$(N_SRC)/autogen.sh
+	set -e; cd $(N_OBJ); \
+		$(N_SRC)/configure --enable-maintainer-mode \
+			--prefix=$(DEST) \
+			--enable-silent-rules --enable-mdev \
+			--enable-giflib \
+			--enable-cleanup \
+			--with-target=native --with-boxtype=generic \
+			--with-stb-hal-includes=$(LH_SRC)/include \
+			--with-stb-hal-build=$(DEST)/lib \
+			; \
+		test -e svn_version.h || echo '#define BUILT_DATE "error - not set"' > svn_version.h; \
+		test -e git_version.h || echo '#define BUILT_DATE "error - not set"' > git_version.h; \
+		test -e version.h || touch version.h
+
+$(OBJ):
+	mkdir $(OBJ)
+$(OBJ)/neutrino-mp \
+$(OBJ)/libstb-hal: | $(OBJ)
+	mkdir $@
+$(SOURCE):
+	mkdir $@
+$(LH_SRC): | $(SOURCE)
+	cd $(SOURCE) && git clone git://gitorious.org/neutrino-hd/libstb-hal.git
+$(N_SRC): | $(SOURCE)
+	cd $(SOURCE) && git clone git://gitorious.org/neutrino-mp/neutrino-mp.git
+checkout: $(SOURCE)/libstb-hal $(SOURCE)/neutrino-mp
+clean:
+	-$(MAKE) -C $(N_OBJ) clean
+	-$(MAKE) -C $(LH_OBJ) clean
+	rm -rf $(N_OBJ) $(LH_OBJ)
+
+# for those poor ubuntu users, who cannot get recent enough ffmpeg & friends...
+$(SOURCE)/ffmpeg-1.2.1.tar.bz2: | $(SOURCE)
+	cd $(SOURCE) && wget http://www.ffmpeg.org/releases/ffmpeg-1.2.1.tar.bz2
+
+ffmpeg: $(SOURCE)/ffmpeg-1.2.1.tar.bz2
+	tar -C $(SOURCE) -xf $(SOURCE)/ffmpeg-1.2.1.tar.bz2
+	set -e; cd $(SOURCE)/ffmpeg-1.2.1; \
+		./configure --prefix=$(DEST) --disable-doc --disable-stripping ; \
+		$(MAKE); \
+		make install
+
+$(SOURCE)/lua-5.2.2.tar.gz: | $(SOURCE)
+	cd $(SOURCE) && curl -R -O http://www.lua.org/ftp/lua-5.2.2.tar.gz; \
+	tar zxf lua-5.2.2.tar.gz;
+
+lua: $(SOURCE)/lua-5.2.2.tar.gz
+	cd $(SOURCE)/lua-5.2.2 && $(MAKE) linux; \
+	$(MAKE) install INSTALL_TOP=$(DEST); \
+	rm -rf $(DEST)/man
+
+
+# libdvbsi is not commonly packaged for linux distributions...
+$(SOURCE)/libdvbsi++-0.3.6.tar.bz2: | $(SOURCE)
+	cd $(SOURCE) && wget http://www.saftware.de/libdvbsi++/libdvbsi++-0.3.6.tar.bz2
+
+libdvbsi: $(SOURCE)/libdvbsi++-0.3.6.tar.bz2
+	tar -C $(SOURCE) -xf $(SOURCE)/libdvbsi++-0.3.6.tar.bz2
+	set -e; cd $(SOURCE)/libdvbsi++-0.3.6; \
+		./configure --prefix=$(DEST); \
+		$(MAKE); \
+		make install
+
+
+
+
+PHONY = checkout
+.PHONY: $(PHONY)
