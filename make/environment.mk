@@ -47,10 +47,10 @@ BOXARCH     ?= arm
 endif
 
 ifneq ($(GIT_PROTOCOL), http)
-GITORIOUS ?= git://gitorious.org
+GITORIOUS ?= git@github.com: 
 COOLSTREAM_DE ?= git://coolstreamtech.de
 else
-GITORIOUS ?= https://git.gitorious.org
+GITORIOUS ?= https://github.com/
 endif
 
 WHOAMI      := $(shell id -un)
@@ -188,7 +188,7 @@ TDT_GIT ?= $(GITORIOUS)/~pinky1981/open-duckbox-project-sh4/pingulux-git.git
 TDT_SRC ?= $(SOURCE_DIR)/pingulux-git
 else
 # ... but this one is not specific to SPARK boxes.
-TDT_GIT ?= $(GITORIOUS)/open-duckbox-project-sh4/tdt.git
+TDT_GIT ?= $(GITORIOUS)lexandr0s/tdt-neutrino-mp-sdl.git
 TDT_SRC ?= $(SOURCE_DIR)/tdt
 endif
 
