@@ -14,7 +14,7 @@ PREQS += cs-sources
 endif
 ifeq ($(PLATFORM), spark)
 PREQS += $(TDT_SRC)
-PREQS += $(SOURCE_DIR)/tdt-driver
+#PREQS += $(SOURCE_DIR)/tdt-driver
 endif
 ifeq ($(USE_STB_HAL), yes)
 PREQS += $(SOURCE_DIR)/libstb-hal
@@ -49,7 +49,7 @@ $(SOURCE_DIR)/neutrino-mp:
 	@echo ' ============================================================================== '
 	mkdir -p $(SOURCE_DIR)
 	cd $(SOURCE_DIR) && \
-		git clone $(GITORIOUS)/neutrino-mp/neutrino-mp.git neutrino-mp
+		git clone $(GITORIOUS)lexandr0s/neutrino-mp.git neutrino-mp
 
 $(SOURCE_DIR)/neutrino-hd-td:
 	@echo ' ============================================================================== '
@@ -63,12 +63,12 @@ $(SOURCE_DIR)/libstb-hal:
 	@echo "=== cloning libstb-hal ==="
 	mkdir -p $(SOURCE_DIR)
 	cd $(SOURCE_DIR) && \
-		git clone $(GITORIOUS)/neutrino-hd/libstb-hal.git libstb-hal
+		git clone $(GITORIOUS)lexandr0s/libstb-hal.git  libstb-hal
 
 $(PLUGIN_DIR):
 	mkdir -p $(SOURCE_DIR)
 	cd $(SOURCE_DIR) && \
-		git clone $(GITORIOUS)/neutrino-hd/neutrino-hd-plugins.git
+		git clone $(GITORIOUS)lexandr0s/neutrino-hd-plugins.git
 
 $(SOURCE_DIR)/svn/COOLSTREAM:
 	mkdir -p $(shell dirname $@)
