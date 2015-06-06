@@ -160,4 +160,4 @@ tdsvn: $(TD_SVN)
 
 $(TDT_SRC):
 	set -e; cd $(SOURCE_DIR); \
-		git clone $(TDT_GIT)
+		git clone $(TDT_GIT) tdt
