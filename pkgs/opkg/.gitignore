@@ -1,0 +1,6 @@
+*.opk
+.cache
+.old
+Packages
+Packages.gz
+
