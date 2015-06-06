@@ -47,7 +47,7 @@ BOXARCH     ?= arm
 endif
 
 ifneq ($(GIT_PROTOCOL), http)
-GITORIOUS ?= git@github.com: 
+GITORIOUS ?= git@github.com:
 COOLSTREAM_DE ?= git://coolstreamtech.de
 else
 GITORIOUS ?= https://github.com/
