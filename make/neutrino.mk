@@ -1,6 +1,6 @@
 #Makefile to build NEUTRINO
 
-NEUTRINO_DEPS  = libcurl libid3tag libmad freetype libjpeg giflib ffmpeg libdvbsi++ libsigc++
+NEUTRINO_DEPS  = e2fsprogs fribidi libcurl libid3tag libmad freetype libjpeg giflib ffmpeg libdvbsi++ libsigc++
 NEUTRINO_DEPS += openthreads
 NEUTRINO_DEPS += lua
 NEUTRINO_PKG_DEPS =
@@ -71,7 +71,7 @@ $(N_OBJDIR)/config.status: $(NEUTRINO_DEPS) $(MAKE_DIR)/neutrino.mk
 		LDFLAGS="$(N_LDFLAGS)" \
 		$(N_HD_SOURCE)/configure --host=$(TARGET) --build=$(BUILD) --prefix= \
 				--enable-silent-rules --enable-mdev --enable-giflib \
-				--enable-maintainer-mode --with-target=cdk --with-boxtype=spark7162 \
+				--enable-maintainer-mode --with-target=cdk --with-boxtype=$(N_BOX) \
 				--enable-cleanup \
 				--enable-lua \
 				--enable-ffmpegdec \
@@ -174,7 +174,7 @@ $(LH_OBJDIR)/config.status: $(MAKE_DIR)/neutrino.mk $(LH_DEPS)
 				--build=$(BUILD) \
 				--prefix= \
 				--with-target=cdk \
-				--with-boxtype=spark7162 \
+				--with-boxtype=$(N_BOX) \
 				--enable-maintainer-mode \
 				--enable-shared=no \
 				--enable-gstreamer=yes
