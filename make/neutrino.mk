@@ -5,7 +5,8 @@ NEUTRINO_DEPS += openthreads
 NEUTRINO_DEPS += lua
 NEUTRINO_PKG_DEPS =
 
-N_CFLAGS   = -Wall -W -Wshadow -g -O2 -fno-strict-aliasing -rdynamic -DNEW_LIBCURL $(LOCAL_NEUTRINO_CFLAGS)
+#N_CFLAGS   = -Wall -W -Wshadow -g -O2 -fno-strict-aliasing -rdynamic -DNEW_LIBCURL $(LOCAL_NEUTRINO_CFLAGS)
+N_CFLAGS = -Wall -W -Wshadow -g0 -pipe -Os -fno-strict-aliasing -rdynamic -D__user= -DCPU_FREQ -DNEW_LIBCURL $(LOCAL_NEUTRINO_CFLAGS)
 N_CPPFLAGS = -I$(TARGETPREFIX)/include
 ifeq ($(PLATFORM), coolstream)
 N_CPPFLAGS += -DUSE_NEVIS_GXA
@@ -70,7 +71,10 @@ $(N_OBJDIR)/config.status: $(NEUTRINO_DEPS) $(MAKE_DIR)/neutrino.mk
 		LDFLAGS="$(N_LDFLAGS)" \
 		$(N_HD_SOURCE)/configure --host=$(TARGET) --build=$(BUILD) --prefix= \
 				--enable-silent-rules --enable-mdev --enable-giflib \
-				--enable-maintainer-mode --with-target=cdk --with-boxtype=$(PLATFORM) \
+				--enable-maintainer-mode --with-target=cdk --with-boxtype=spark7162 \
+				--enable-cleanup \
+				--enable-lua \
+				--enable-ffmpegdec \
 				$(N_CONFIG_OPTS) $(LOCAL_NEUTRINO_BUILD_OPTIONS) \
 				INSTALL="`which install` -p"; \
 		test -e version.h || touch version.h
@@ -105,7 +109,7 @@ PHONY += $(PKGPREFIX)/.version $(TARGETPREFIX)/.version
 $(D)/neutrino: $(N_OBJDIR)/config.status $(NEUTRINO_DEPS2)
 	rm -f $(N_OBJDIR)/src/neutrino # trigger relinking, to pick up newly built libstb-hal
 	PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
-	$(MAKE) -C $(N_OBJDIR) all     DESTDIR=$(TARGETPREFIX)
+	$(MAKE) -v -C $(N_OBJDIR) all     DESTDIR=$(TARGETPREFIX)
 	$(MAKE) -C $(N_OBJDIR) install DESTDIR=$(TARGETPREFIX)
 	+make $(TARGETPREFIX)/.version
 	: touch $@
@@ -165,12 +169,17 @@ $(LH_OBJDIR)/config.status: $(MAKE_DIR)/neutrino.mk $(LH_DEPS)
 		export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH); \
 		CC=$(TARGET)-gcc CFLAGS="$(N_CFLAGS)" CXXFLAGS="$(N_CFLAGS)" CPPFLAGS="$(N_CPPFLAGS)" \
 		LDFLAGS="$(N_LDFLAGS) -L$(TARGETLIB)" \
-		$(LH_SRC)/configure --host=$(TARGET) --build=$(BUILD) --prefix= \
-				--enable-maintainer-mode --with-target=cdk --with-boxtype=$(PLATFORM) \
-				--enable-silent-rules \
-				INSTALL="`which install` -p"
+		$(LH_SRC)/configure \
+				--host=$(TARGET) \
+				--build=$(BUILD) \
+				--prefix= \
+				--with-target=cdk \
+				--with-boxtype=spark7162 \
+				--enable-maintainer-mode \
+				--enable-shared=no \
+				--enable-gstreamer=yes
 
 libstb-hal: $(LH_OBJDIR)/config.status
 	PKG_CONFIG_PATH=$(PKG_CONFIG_PATH) \
-	$(MAKE) -C $(LH_OBJDIR) all     DESTDIR=$(TARGETPREFIX)
+	$(MAKE) -C $(LH_OBJDIR)
 	$(MAKE) -C $(LH_OBJDIR) install DESTDIR=$(TARGETPREFIX)

@@ -77,11 +77,16 @@ PATCH_STR = _0210
 
 ## rpm versions of packages on the STM server
 # binutils 2.21.51-* segfault on linking the kernel
-BINUTILS_VER	= 2.22-61
-GCC_VER		= 4.6.3-109
-STMKERNEL_VER	= 2.6.32.46-45
-LIBGCC_VER	= 4.6.3-113
-GLIBC_VER	= 2.10.2-34
+#BINUTILS_VER	= 2.22-61
+BINUTILS_VER = 2.24.51.0.3-76
+#GCC_VER		= 4.6.3-109
+GCC_VER = 4.8.4-139
+#STMKERNEL_VER	= 2.6.32.46-45
+STMKERNEL_VER = 2.6.32.46-48
+#LIBGCC_VER	= 4.6.3-11
+LIBGCC_VER = 4.8.4-148
+#GLIBC_VER	= 2.10.2-34
+GLIBC_VER = 2.14.1-56
 
 
 ### those patches are taken from the pingulux-git/tdt checkout
@@ -135,17 +140,21 @@ stlinux-dfb: \
 TDT_TOOLS ?= $(BUILD_TMP)/tdt-tools
 $(TDT_TOOLS)/config.status:
 	test -d $(TDT_TOOLS)|| mkdir $(TDT_TOOLS)
-	$(TDT_SRC)/tdt/cvs/apps/misc/tools/autogen.sh
+	$(SOURCE_DIR)/apps/tools/autogen.sh
+#	$(TDT_SRC)/tdt/cvs/apps/misc/tools/autogen.sh
 	set -e; cd $(shell dirname $@); \
 		export PKG_CONFIG=$(PKG_CONFIG); \
 		export PKG_CONFIG_PATH=$(PKG_CONFIG_PATH); \
 		CC=$(TARGET)-gcc \
 		CFLAGS="$(TARGET_CFLAGS)" \
 		CXXFLAGS="$(TARGET_CFLAGS)" \
-		$(TDT_SRC)/tdt/cvs/apps/misc/tools/configure \
+		$(SOURCE_DIR)/apps/tools/configure \
 			--host=$(TARGET) --build=$(BUILD) --prefix= \
 			--enable-silent-rules --enable-maintainer-mode \
+			--with-boxtype=spark7162 \
 			;
+
+#$(TDT_SRC)/tdt/cvs/apps/misc/tools/configure 
 
 ustslave: $(TARGETPREFIX)/bin/ustslave
 fp_control: $(TARGETPREFIX)/bin/fp_control

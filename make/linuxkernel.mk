@@ -390,8 +390,8 @@ $(BUILD_TMP)/tdt-driver: \
 $(PATCHES)/sparkdrivers/0004-stmfb-silence-kmsg-spam.patch \
 | $(TARGETPREFIX)/include/linux/dvb
 	rm -fr $@ $@-7162
-#	cp -a $(SOURCE_DIR)/tdt-driver $(BUILD_TMP)
-	cp -a $(SOURCE_DIR)/tdt/tdt/cvs/driver $(BUILD_TMP)/tdt-driver
+	cp -a $(SOURCE_DIR)/tdt-driver $(BUILD_TMP)
+#	cp -a $(SOURCE_DIR)/tdt/tdt/cvs/driver $(BUILD_TMP)/tdt-driver
 	set -e; cd $@; \
 		for i in $^; do \
 			test -d $$i && continue; \
@@ -412,7 +412,8 @@ $(PATCHES)/sparkdrivers/0004-stmfb-silence-kmsg-spam.patch \
 		rm -f stmfb; \
 		ln -s stmfb-3.1_stm24_0102 stmfb; \
 		cp -a stmfb/linux/drivers/video/stmfb.h $(TARGETPREFIX)/include/linux
-	cp -a $@/frontcontroller/aotom/aotom_main.h $(TARGETPREFIX)/include
+	cp -a $@/frontcontroller/aotom_spark/aotom_main.h $(TARGETPREFIX)/include
+	cp -ar $@/include/player2_191/* $@/player2/components/include
 	# disable wireless build
 	# sed -i 's/^\(obj-y.*+= wireless\)/# \1/' $@/Makefile
 	# disable led and button - it's not for spark
