@@ -73,7 +73,7 @@ $(STL_ARCHIVE)/%.i386.rpm \
 $(STL_ARCHIVE)/%.noarch.rpm:
 	$(STL_GET) $(STL_FTP_UPD_SH4)/$(subst $(STL_ARCHIVE)/,"",$@)
 
-PATCH_STR = _0210
+#PATCH_STR = _0210
 
 ## rpm versions of packages on the STM server
 # binutils 2.21.51-* segfault on linking the kernel
