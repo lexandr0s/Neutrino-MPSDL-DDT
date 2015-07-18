@@ -4,8 +4,8 @@ SYSTEM_PKGS = neutrino-pkg minimal-system-pkgs
 SYSTEM_OPKGS =
 
 # additional stuff which is useful on most systems
-SYSTEM_PKGS  += alsa-lib libxml2 libbluray e2fsprogs
-SYSTEM_OPKGS += libbluray e2fsprogs
+SYSTEM_PKGS  += alsa-lib libxml2 libbluray e2fsprogs openssl
+SYSTEM_OPKGS += libbluray e2fsprogs openssl-libs
 
 glibc-pkg: $(TARGETPREFIX)/sbin/ldconfig
 	rm -rf $(PKGPREFIX)
