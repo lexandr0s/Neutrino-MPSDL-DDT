@@ -26,7 +26,7 @@ K_DEP = $(D)/cskernel
 K_OBJ = $(BUILD_TMP)/kobj
 endif
 ifeq ($(PLATFORM), spark)
-KVERSION = 2.6.32.57
+#KVERSION = 2.6.32.57
 KVERSION_FULL = $(KVERSION)_stm24$(PATCH_STR)
 KVERSION_SRC = $(KVERSION_FULL)
 K_OBJ = $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
@@ -286,51 +286,154 @@ endif
 
 ifeq ($(PLATFORM), spark)
 TMP_KDIR=$(BUILD_TMP)/linux-2.6.32
-TDT_PATCHES=$(TDT_SRC)/tdt/cvs/cdk/Patches
+#TDT_PATCHES=$(TDT_SRC)/tdt/cvs/cdk/Patches
 
-MY_KERNELPATCHES = $(PATCHES)/0001-bpa2-ignore-bigphysarea-kernel-parameter.patch
-ifeq ($(PATCH_STR),"_0209")
-MY_KERNELPATCHES += $(PATCHES)/0001-spark-fix-buffer-overflow-in-lirc_stm.patch
-endif
+#MY_KERNELPATCHES = $(PATCHES)/0001-bpa2-ignore-bigphysarea-kernel-parameter.patch
+#ifeq ($(PATCH_STR),"_0209")
+#MY_KERNELPATCHES += $(PATCHES)/0001-spark-fix-buffer-overflow-in-lirc_stm.patch
+#endif
 
 # this is ugly, but easier than changing the way the tdt patches are applied.
 # The reason for this patch is, that the spark_setup and spark7162_setup patches
 # can not both be applied, because they overlap in a single file. The spark7162
 # patch has everything that's needed in this file, so I partly revert the former...
-$(TDT_PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch: \
-		$(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch
-	ln -sf $(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch $(TDT_PATCHES)
+#$(TDT_PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch: \
+#		$(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch
+#	ln -sf $(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch $(TDT_PATCHES)
 
 # if you only want to build for one version, set SPARK_ONLY=1 or SPARK7162_ONLY=1 in config
 SPARKKERNELDEPS =
 ifeq ($(SPARK7162_ONLY), )
-SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark
+SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark$(PATCH_STR)
 endif
 ifeq ($(SPARK_ONLY), )
-SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark7162
+SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark7162$(PATCH_STR)
 endif
 
-$(BUILD_TMP)/linux-$(KVERSION_SRC): \
-		$(STL_ARCHIVE)/stlinux24-host-kernel-source-sh4-$(KVERSION_FULL)-$(subst _0,,$(PATCH_STR)).src.rpm \
-		$(MY_KERNELPATCHES) \
-		$(SPARK_PATCHES_24:%=$(TDT_PATCHES)/%) \
-		$(SPARKKERNELDEPS)
-	unpack-rpm.sh $(BUILD_TMP) "" $(BUILD_TMP)/ksrc $<
-	rm -fr $(TMP_KDIR)
-	tar -C $(BUILD_TMP) -xf $(BUILD_TMP)/ksrc/linux-2.6.32.tar.bz2
-	set -e; cd $(TMP_KDIR); \
-		bzcat $(BUILD_TMP)/ksrc/linux-$(KVERSION).patch.bz2 | patch -p1 ;\
-		bzcat $(BUILD_TMP)/ksrc/linux-$(KVERSION)_stm24_sh4$(PATCH_STR).patch.bz2 | patch -p1; \
-		for i in $(SPARK_PATCHES_24); do \
+
+ifeq ($(PATCH_STR),_0209)
+HOST_KERNEL_REVISION = 8c676f1a85935a94de1fb103c0de1dd25ff69014
+endif
+ifeq ($(PATCH_STR),_0211)
+HOST_KERNEL_REVISION = 3bce06ff873fb5098c8cd21f1d0e8d62c00a4903
+endif
+ifeq ($(PATCH_STR),_0214)
+HOST_KERNEL_REVISION = 5cf7f6f209d832a4cf645125598f86213f556fb3
+endif
+ifeq ($(PATCH_STR),_0215)
+HOST_KERNEL_REVISION = 5384bd391266210e72b2ca34590bd9f543cdb5a3
+endif
+ifeq ($(PATCH_STR),_0217)
+HOST_KERNEL_REVISION = b43f8252e9f72e5b205c8d622db3ac97736351fc
+endif
+
+
+
+COMMONPATCHES_24 = \
+		linux-kbuild-generate-modules-builtin_stm24$(PATCH_STR).patch \
+		linux-sh4-linuxdvb_stm24$(PATCH_STR).patch \
+		linux-sh4-sound_stm24$(PATCH_STR).patch \
+		linux-sh4-time_stm24$(PATCH_STR).patch \
+		linux-sh4-init_mm_stm24$(PATCH_STR).patch \
+		linux-sh4-copro_stm24$(PATCH_STR).patch \
+		linux-sh4-strcpy_stm24$(PATCH_STR).patch \
+		linux-sh4-ext23_as_ext4_stm24$(PATCH_STR).patch \
+		linux-sh4-bpa2_procfs_stm24$(PATCH_STR).patch \
+		linux-ftdi_sio.c_stm24$(PATCH_STR).patch \
+		linux-sh4-lzma-fix_stm24$(PATCH_STR).patch \
+		linux-tune_stm24.patch \
+		linux-sh4-permit_gcc_command_line_sections_stm24.patch \
+		linux-sh4-mmap_stm24.patch
+
+		
+		
+		
+ifeq ($(PATCH_STR),_0209)
+COMMONPATCHES_24 += linux-sh4-makefile_stm24.patch \
+		linux-sh4-dwmac_stm24_0209.patch \
+		linux-sh4-directfb_stm24$(PATCH_STR).patch
+endif	
+		
+ifeq ($(PATCH_STR),_0211)
+COMMONPATCHES_24 += linux-sh4-console_missing_argument_stm24$(PATCH_STR).patch
+endif		
+
+ifeq ($(PATCH_STR),_0215)
+COMMONPATCHES_24 += linux-ratelimit-bug_stm24$(PATCH_STR).patch \
+		linux-patch_swap_notify_core_support_stm24$(PATCH_STR).patch \
+		linux-sh4-console_missing_argument_stm24$(PATCH_STR).patch
+endif		
+		
+ifeq ($(PATCH_STR),_0217)
+COMMONPATCHES_24 += linux-defined_is_deprecated_timeconst.pl_stm24$(PATCH_STR).patch \
+		linux-perf-warning-fix_stm24$(PATCH_STR).patch \
+		linux-ratelimit-bug_stm24$(PATCH_STR).patch \
+		linux-patch_swap_notify_core_support_stm24$(PATCH_STR).patch \
+		linux-sh4-console_missing_argument_stm24$(PATCH_STR).patch
+endif		
+
+
+SPARK_PATCHES_24 = $(COMMONPATCHES_24) \
+		linux-sh4-stmmac_stm24$(PATCH_STR).patch \
+		linux-sh4-lmb_stm24$(PATCH_STR).patch \
+		linux-sh4-spark_setup_stm24$(PATCH_STR).patch
+		
+
+		
+ifeq ($(PATCH_STR),_0209)
+SPARK_PATCHES_24 += linux-sh4-linux_yaffs2_stm24_0209.patch \
+		linux-sh4-lirc_stm.patch 
+endif		
+		
+ifeq ($(PATCH_STR),_0211)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif		
+
+ifeq ($(PATCH_STR),_0214)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif
+
+ifeq ($(PATCH_STR),_0215)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif
+
+ifeq ($(PATCH_STR),_0217)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif
+
+SPARK7162_PATCHES_24 = $(COMMONPATCHES_24) \
+		linux-sh4-stmmac_stm24$(PATCH_STR).patch \
+		linux-sh4-lmb_stm24$(PATCH_STR).patch \
+		linux-sh4-spark7162_setup_stm24$(PATCH_STR).patch
+
+
+		
+ifeq ($(N_BOX),spark)
+KERNELPATCHES_24 = $(SPARK_PATCHES_24)
+endif	
+
+ifeq ($(N_BOX),spark7162)
+KERNELPATCHES_24 = $(SPARK7162_PATCHES_24)
+endif	
+
+
+$(BUILD_TMP)/linux-$(KVERSION_SRC): $(SPARKKERNELDEPS) \
+		$(KERNELPATCHES_24:%=$(K_PATCHES)/%)
+		rm -fr $(TMP_KDIR)
+		REPO=git://git.stlinux.com/stm/linux-sh4-2.6.32.y.git;protocol=git;branch=stmicro; \
+		[ -d "$(ARCHIVE)/linux-sh4-2.6.32.y.git" ] && \
+		(echo "Updating STlinux kernel source"; cd $(ARCHIVE)/linux-sh4-2.6.32.y.git; git pull;); \
+		[ -d "$(ARCHIVE)/linux-sh4-2.6.32.y.git" ] || \
+		(echo "Getting STlinux kernel source"; git clone -n $$REPO $(ARCHIVE)/linux-sh4-2.6.32.y.git); \
+		(echo "Copying kernel source code to build environment"; cp -ra $(ARCHIVE)/linux-sh4-2.6.32.y.git $(TMP_KDIR)); \
+		(echo "Applying patch level $(PATCH_STR)"; cd $(TMP_KDIR); git checkout -q $(HOST_KERNEL_REVISION))
+		set -e; cd $(TMP_KDIR); \
+		for i in $(KERNELPATCHES_24); do \
 			echo "==> Applying Patch: $$i"; \
-			patch -p1 -i $(TDT_PATCHES)/$$i; \
+			patch -p1 -i $(K_PATCHES)/$$i; \
 		done; \
-		for i in $(MY_KERNELPATCHES); do \
-			echo "==> Applying Patch: $(subst $(PATCHES)/,'',$$i)"; \
-			patch -p1 -i $$i; \
-		done; \
-		cp $(PATCHES)/kernel.config-spark     .config-spark; \
-		cp $(PATCHES)/kernel.config-spark7162 .config-7162; \
+		cp $(PATCHES)/kernel.config-spark$(PATCH_STR)     .config-spark; \
+		cp $(PATCHES)/kernel.config-spark7162$(PATCH_STR) .config-7162; \
 		sed -i "s#^\(CONFIG_EXTRA_FIRMWARE_DIR=\).*#\1\"$(TDT_SRC)/tdt/cvs/cdk/integrated_firmware\"#" .config-*;
 	rm -fr $@ $@-7162
 	mv $(BUILD_TMP)/linux-2.6.32 $@
