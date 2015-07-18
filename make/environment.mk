@@ -63,6 +63,7 @@ CROSS_BUILD_DIR = $(CROSS_BUILD_VER:-tls=)
 
 ARCHIVE      = $(BASE_DIR)/download
 PATCHES      = $(BASE_DIR)/archive-patches
+K_PATCHES    = $(BASE_DIR)/archive-patches/kernel
 BUILD_TMP    = $(BASE_DIR)/build_tmp
 D            = $(BASE_DIR)/deps
 # backwards compatibility
