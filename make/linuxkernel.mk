@@ -410,12 +410,18 @@ SPARK7162_PATCHES_24 = $(COMMONPATCHES_24) \
 		
 ifeq ($(N_BOX),spark)
 KERNELPATCHES_24 = $(SPARK_PATCHES_24)
+K_CONF = $(PATCHES)/kernel.config-spark$(PATCH_STR)
 endif	
 
 ifeq ($(N_BOX),spark7162)
 KERNELPATCHES_24 = $(SPARK7162_PATCHES_24)
+K_CONF = $(PATCHES)/kernel.config-spark7162$(PATCH_STR)
 endif	
 
+
+
+envkern:
+	echo $(K_CONF)
 
 $(BUILD_TMP)/linux-$(KVERSION_SRC): $(SPARKKERNELDEPS) \
 		$(KERNELPATCHES_24:%=$(K_PATCHES)/%)
@@ -431,45 +437,40 @@ $(BUILD_TMP)/linux-$(KVERSION_SRC): $(SPARKKERNELDEPS) \
 		for i in $(KERNELPATCHES_24); do \
 			echo "==> Applying Patch: $$i"; \
 			patch -p1 -i $(K_PATCHES)/$$i; \
-		done; \
-		cp $(PATCHES)/kernel.config-spark$(PATCH_STR)     .config-spark; \
-		cp $(PATCHES)/kernel.config-spark7162$(PATCH_STR) .config-7162; \
-		sed -i "s#^\(CONFIG_EXTRA_FIRMWARE_DIR=\).*#\1\"$(TDT_SRC)/tdt/cvs/cdk/integrated_firmware\"#" .config-*;
-	rm -fr $@ $@-7162
+		done;
+		
+	cp -af $(K_CONF) $(TMP_KDIR)/.config
+	sed -i "s#^\(CONFIG_EXTRA_FIRMWARE_DIR=\).*#\1\"$(TDT_SRC)/tdt/cvs/cdk/integrated_firmware\"#" .config
 	mv $(BUILD_TMP)/linux-2.6.32 $@
-	cp -al $@ $@-7162 # hardlinked tree
-	mv $@/.config-spark $@/.config
-	mv $@-7162/.config-7162 $@-7162/.config
+	
 	# this allows to compile old 0209 kernel with 0210 config without questions...
 	echo "CONFIG_HW_GLITCH_WIDTH=1" >> $@/.config
-	echo "CONFIG_HW_GLITCH_WIDTH=1" >> $@-7162/.config
+	#echo "CONFIG_HW_GLITCH_WIDTH=1" >> $@-7162/.config
 	$(MAKE) -C $@ ARCH=sh oldconfig
 	$(MAKE) -C $@ ARCH=sh include/asm
 	$(MAKE) -C $@ ARCH=sh include/linux/version.h
 	$(MAKE) -C $@ ARCH=sh CROSS_COMPILE=$(TARGET)- modules_prepare
-	$(MAKE) -C $@-7162 ARCH=sh oldconfig
-	$(MAKE) -C $@-7162 ARCH=sh include/asm
-	$(MAKE) -C $@-7162 ARCH=sh include/linux/version.h
-	$(MAKE) -C $@-7162 ARCH=sh CROSS_COMPILE=$(TARGET)- modules_prepare
+	#$(MAKE) -C $@-7162 ARCH=sh oldconfig
+	#$(MAKE) -C $@-7162 ARCH=sh include/asm
+	#$(MAKE) -C $@-7162 ARCH=sh include/linux/version.h
+	#$(MAKE) -C $@-7162 ARCH=sh CROSS_COMPILE=$(TARGET)- modules_prepare
 
-kernelmenuconfig: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
+#kernelmenuconfig: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
+kernelmenuconfig: $(BUILD_TMP)/linux-$(KVERSION_SRC)
 	make -C$^ ARCH=sh CROSS_COMPILE=$(TARGET)- menuconfig
 
-_sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
-	set -e; cd $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA); \
+#_sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
+_sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)
+	set -e; cd $(BUILD_TMP)/linux-$(KVERSION_SRC); \
 		export PATH=$(CROSS_BASE)/host/bin:$(PATH); \
 		$(MAKE) ARCH=sh CROSS_COMPILE=$(TARGET)- uImage modules; \
 		make    ARCH=sh CROSS_COMPILE=$(TARGET)- \
-			INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules$(K_EXTRA) modules_install; \
-		cp -L arch/sh/boot/uImage $(BUILD_TMP)/uImage$(K_EXTRA)
+			INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules modules_install; \
+		cp -L arch/sh/boot/uImage $(BUILD_TMP)/uImage
 
 sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)
-ifeq ($(SPARK7162_ONLY), )
 	$(MAKE) _sparkkernel
-endif
-ifeq ($(SPARK_ONLY), )
-	$(MAKE) _sparkkernel K_EXTRA=-7162
-endif
+
 
 $(TARGETPREFIX)/include/linux/dvb:
 	mkdir -p $@
@@ -492,7 +493,6 @@ $(TARGETPREFIX)/include/linux/dvb:
 $(BUILD_TMP)/tdt-driver: \
 $(PATCHES)/sparkdrivers/0004-stmfb-silence-kmsg-spam.patch \
 | $(TARGETPREFIX)/include/linux/dvb
-	rm -fr $@ $@-7162
 	cp -a $(SOURCE_DIR)/tdt-driver $(BUILD_TMP)
 #	cp -a $(SOURCE_DIR)/tdt/tdt/cvs/driver $(BUILD_TMP)/tdt-driver
 	set -e; cd $@; \
@@ -514,52 +514,54 @@ $(PATCHES)/sparkdrivers/0004-stmfb-silence-kmsg-spam.patch \
 		cd ../stgfb; \
 		rm -f stmfb; \
 		ln -s stmfb-3.1_stm24_0102 stmfb; \
-		cp -a stmfb/linux/drivers/video/stmfb.h $(TARGETPREFIX)/include/linux
+	cp -a stmfb/linux/drivers/video/stmfb.h $(TARGETPREFIX)/include/linux
 	cp -a $@/frontcontroller/aotom_spark/aotom_main.h $(TARGETPREFIX)/include
 	cp -ar $@/include/player2_191/* $@/player2/components/include
 	# disable wireless build
 	# sed -i 's/^\(obj-y.*+= wireless\)/# \1/' $@/Makefile
 	# disable led and button - it's not for spark
 	sed -i 's@^\(obj-y.*+= \(led\|button\)/\)@# \1@' $@/Makefile
-	cp -al $@ $@-7162
+#	cp -al $@ $@-7162
 
 # CONFIG_MODULES_PATH= is needed because the Makefile contains
 # "-I$(CONFIG_MODULES_PATH)/usr/include". With CONFIG_MODULES_PATH unset,
 # host system includes are used and that might be fatal.
-_sparkdriver: $(BUILD_TMP)/tdt-driver$(K_EXTRA) | $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
-	$(MAKE) -C $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) ARCH=sh \
+_sparkdriver: $(BUILD_TMP)/tdt-driver | $(BUILD_TMP)/linux-$(KVERSION_SRC)
+	$(MAKE) -C $(BUILD_TMP)/linux-$(KVERSION_SRC) ARCH=sh \
 		CONFIG_MODULES_PATH=$(CROSS_DIR)/target \
-		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) \
-		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver$(K_EXTRA) \
+		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC) \
+		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver \
 		M=$(firstword $^) \
 		PLAYER191=player191 \
 		CROSS_COMPILE=$(TARGET)-
-	make    -C $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) ARCH=sh \
+	make    -C $(BUILD_TMP)/linux-$(KVERSION_SRC) ARCH=sh \
 		CONFIG_MODULES_PATH=$(CROSS_DIR)/target \
-		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) \
-		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver$(K_EXTRA) \
+		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC) \
+		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver \
 		M=$(firstword $^) \
 		PLAYER191=player191 \
 		CROSS_COMPILE=$(TARGET)- \
-		INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules$(K_EXTRA) modules_install
+		INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules modules_install
 
 sparkdriver:
-ifeq ($(SPARK7162_ONLY), )
-	$(MAKE) _sparkdriver SPARK=1
+ifeq ($(N_BOX),spark)
+	$(MAKE) _sparkdriver SPARK=1 WLANDRIVER=1
 endif
-ifeq ($(SPARK_ONLY), )
-	$(MAKE) _sparkdriver SPARK7162=1 K_EXTRA=-7162
-	find $(TARGETPREFIX)/mymodules-7162 -name stmcore-display-sti7106.ko | \
+ifeq ($(N_BOX),spark7162)
+	$(MAKE) _sparkdriver SPARK7162=1 WLANDRIVER=1
+	find $(TARGETPREFIX)/mymodules -name stmcore-display-sti7106.ko | \
 		xargs -r rm # we don't have a 7106 chip
 endif
 
 sparkfirmware: $(STL_ARCHIVE)/stlinux24-sh4-stmfb-firmware-1.20-1.noarch.rpm
 	unpack-rpm.sh $(BUILD_TMP) $(STM_RELOCATE)/devkit/sh4/target $(TARGETPREFIX)/mymodules $^
-	unpack-rpm.sh $(BUILD_TMP) $(STM_RELOCATE)/devkit/sh4/target $(TARGETPREFIX)/mymodules-7162 $^
+ifeq ($(N_BOX),spark)
 	ln -sf component_7111_mb618.fw	 $(TARGETPREFIX)/mymodules/lib/firmware/component.fw
-	ln -sf component_7105_hdk7105.fw $(TARGETPREFIX)/mymodules-7162/lib/firmware/component.fw
-	ln -sf fdvo0_7105.fw		 $(TARGETPREFIX)/mymodules-7162/lib/firmware/fdvo0.fw
-
+endif
+ifeq ($(N_BOX),spark7162)
+	ln -sf component_7105_hdk7105.fw $(TARGETPREFIX)/mymodules/lib/firmware/component.fw
+	ln -sf fdvo0_7105.fw		 $(TARGETPREFIX)/mymodules/lib/firmware/fdvo0.fw
+endif
 
 endif
 
