@@ -534,32 +534,36 @@ $(D)/libffi-$(LIBFFI_VER): $(ARCHIVE)/libffi-$(LIBFFI_VER).tar.gz
 # TODO: check if we this built glib-genmarshal is new enough for the glib
 #       version we're trying to build
 ######
-$(HOSTPREFIX)/bin/glib-genmarshal \
-$(HOSTPREFIX)/bin/glib-compile-resources: | $(HOSTPREFIX)/bin
-	$(UNTAR)/glib-$(GLIB_VER).tar.xz
-	set -e; cd $(BUILD_TMP)/glib-$(GLIB_VER); \
-		export PKG_CONFIG=/usr/bin/pkg-config; \
+$(D)/host_glib2_genmarshal: $(ARCHIVE)/glib-$(GLIB_VER).tar.gz
+	( rm -rf glib-2.28.3 || /bin/true ) && gunzip -cd $(ARCHIVE)/glib-2.28.3.tar.gz | TAPE=- tar -x && ( cd glib-2.28.3 && chmod +w -R .; patch -p1 < $(PATCHES)/glib-2.28.3.patch )
+	export PKG_CONFIG=/bin/pkg-config && \
+	cd glib-2.28.3 && \
 		./configure \
-			--disable-gtk-doc \
-			--disable-gtk-doc-html \
 			--enable-static=yes \
 			--enable-shared=no \
 			--prefix=`pwd`/out \
-			; \
-		$(MAKE) install ; \
+		&& \
+		$(MAKE) install && \
 		cp -a out/bin/glib-* $(HOSTPREFIX)/bin
-	$(REMOVE)/glib-$(GLIB_VER)
+	rm -rf glib-2.28.3
+	touch $@
+
+
+
+
 
 #http://www.dbox2world.net/board293-coolstream-hd1/board314-coolstream-development/9363-idee-midnight-commander/
-$(D)/libglib: $(D)/libglib-$(GLIB_VER)
-$(D)/libglib-$(GLIB_VER): $(ARCHIVE)/glib-$(GLIB_VER).tar.xz $(D)/zlib $(D)/libffi | $(TARGETPREFIX)
+$(D)/libglib: $(D)/host_glib2_genmarshal $(D)/libglib-$(GLIB_VER)
+$(D)/libglib-$(GLIB_VER): $(ARCHIVE)/glib-$(GLIB_VER).tar.gz $(D)/zlib $(D)/libffi | $(TARGETPREFIX)
 	$(REMOVE)/glib-$(GLIB_VER) $(PKGPREFIX)
-	$(UNTAR)/glib-$(GLIB_VER).tar.xz
+	$(UNTAR)/glib-$(GLIB_VER).tar.gz
 	set -e; cd $(BUILD_TMP)/glib-$(GLIB_VER); \
-		$(PATCH)/glib-2.32.4-crosscompile-fix.diff; \
-		autoreconf -fi; \
-		echo "ac_cv_func_posix_getpwuid_r=yes" > config.cache; \
-		echo "ac_cv_func_posix_getgrgid_r=ys" >> config.cache; \
+		$(PATCH)/glib-2.28.3.patch; \
+		echo "glib_cv_va_copy=no" > config.cache; \
+		echo "glib_cv___va_copy=yes" >> config.cache; \
+		echo "glib_cv_va_val_copy=yes" >> config.cache; \
+		echo "ac_cv_func_posix_getpwuid_r=yes" >> config.cache; \
+		echo "ac_cv_func_posix_getgrgid_r=yes" >> config.cache; \
 		echo "glib_cv_stack_grows=no" >> config.cache; \
 		echo "glib_cv_uscore=no" >> config.cache; \
 		$(BUILDENV) \
@@ -616,10 +620,9 @@ $(D)/libxml2: $(D)/zlib $(ARCHIVE)/libxml2-$(LIBXML2_VER).tar.gz | $(TARGETPREFI
 	$(REMOVE)/libxml2-$(LIBXML2_VER) $(PKGPREFIX)
 	touch $@
 
-$(D)/mc: $(ARCHIVE)/mc-$(MC-VER).tar.gz $(D)/libglib $(D)/libncurses | $(TARGETPREFIX) find-autopoint
-	$(UNTAR)/mc-$(MC-VER).tar.gz
+$(D)/mc: $(ARCHIVE)/mc-$(MC-VER).tar.bz2 $(D)/libglib $(D)/libncurses | $(TARGETPREFIX) find-autopoint
+	$(UNTAR)/mc-$(MC-VER).tar.bz2
 	set -e; cd $(BUILD_TMP)/mc-$(MC-VER); \
-		$(PATCH)/mc-4.6.2.diff; \
 		autoreconf -fi; \
 		$(BUILDENV) \
 		CFLAGS="$(TARGET_CFLAGS)" \
@@ -628,16 +631,15 @@ $(D)/mc: $(ARCHIVE)/mc-$(MC-VER).tar.gz $(D)/libglib $(D)/libncurses | $(TARGETP
 			--build=$(BUILD) \
 			--host=$(TARGET) \
 			--prefix=/opt/pkg \
+			--prefix=/usr \
 			--without-gpm-mouse \
 			--with-screen=ncurses \
-			--mandir=/.remove \
-			--without-x; \
-			$(CC) -o src/man2hlp src/man2hlp.c; \
+			--without-x \
 			$(BUILDENV) $(MAKE) all; \
 			make install DESTDIR=$(PKGPREFIX)
 	rm -rf $(PKGPREFIX)/.remove
 	rm -rf $(PKGPREFIX)/opt/pkg/share/locale # who needs localization?
-	rm $(PKGPREFIX)/opt/pkg/share/mc/mc.h*.* # mc.hint.*, mc.hlp.*
+#	rm $(PKGPREFIX)/opt/pkg/share/mc/mc.h*.* # mc.hint.*, mc.hlp.*
 	PKG_VER=$(MC-VER) \
 		PKG_DEP=`opkg-find-requires.sh $(PKGPREFIX)` \
 		$(OPKG_SH) $(CONTROL_DIR)/mc
