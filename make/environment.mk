@@ -182,16 +182,9 @@ UNCOOL_DRIVER = $(UNCOOL_DRVBASE)/drivers/$(UNCOOL_KVER_FULL)
 endif
 UNCOOL_LIBS   = $(UNCOOL_LIBCS) $(UNCOOL_LIBNXP) $(UNCOOL_LIBCA)
 
-## for spark TDT git repos...
-ifeq ($(TDT_REPO), "pinky")
-# this one seems to be more recent, but is a bit "chaotic" ...
-TDT_GIT ?= $(GITORIOUS)/~pinky1981/open-duckbox-project-sh4/pingulux-git.git
-TDT_SRC ?= $(SOURCE_DIR)/pingulux-git
-else
-# ... but this one is not specific to SPARK boxes.
-TDT_GIT ?= $(GITORIOUS)lexandr0s/tdt-neutrino-mp-sdl.git
+
+
 TDT_SRC ?= $(SOURCE_DIR)/tdt
-endif
 
 DRIVER_SRC ?= $(SOURCE_DIR)/tdt-driver
 
