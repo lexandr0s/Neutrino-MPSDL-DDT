@@ -264,12 +264,12 @@ OPKG_VER=0.2.2
 
 # glib; the low-level core library that forms the basis for projects such as GTK+ and GNOME
 GLIB_MAJOR=2
-GLIB_MINOR=36
-GLIB_MICRO=4
+GLIB_MINOR=28
+GLIB_MICRO=3
 GLIB_VER=$(GLIB_MAJOR).$(GLIB_MINOR).$(GLIB_MICRO)
 
 # mc; the famous midnight commander
-MC-VER=4.6.2
+MC-VER=4.8.14
 
 # sg3_utils; a package of utilities for accessing devices that use SCSI command sets
 SG3_UTILS-VER=1.33
