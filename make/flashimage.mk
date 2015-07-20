@@ -17,14 +17,7 @@ local-install:
 	@if test -d $(BASE_DIR)/local/flash/; then \
 		rsync -avP --exclude=*.*~ $(BASE_DIR)/local/flash/. $(BUILD_TMP)/install; \
 	fi
-ifeq ($(PLATFORM), spark)
-ifeq ($(SPARK_ONLY), )
-	# copy over the newest spark7162-drivers package,it will be installed on first boot
-	if test x"`ls $(PACKAGE_DIR)/spark7162-drivers* 2>/dev/null`" != x""; then \
-		cp -a `ls -1t $(PACKAGE_DIR)/spark7162-drivers*|head -1` $(BUILD_TMP)/install; \
-	fi
-endif
-endif
+
 
 flash-prepare: local-install find-mkfs.jffs2 find-sumtool
 
