@@ -86,6 +86,6 @@ APPS_GIT = https://github.com/Duckbox-Developers/apps.git
 
 DRIVER_GIT = https://github.com/Duckbox-Developers/driver.git
 
-TDT_GIT ?= $(GITORIOUS)lexandr0s/tdt-neutrino-mp-sdl.git
+TDT_GIT ?= https://github.com/lexandr0s/tdt.git
 
-TDT_GIT
+
