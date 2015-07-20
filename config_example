@@ -77,3 +77,15 @@ N_BOX = spark7162
 KVERSION = 2.6.32.61
 
 PATCH_STR = _0217
+
+N_GIT = https://github.com/Duckbox-Developers/neutrino-mp-cst-next.git
+
+LH_GIT = https://github.com/Duckbox-Developers/libstb-hal-cst-next.git
+
+APPS_GIT = https://github.com/Duckbox-Developers/apps.git
+
+DRIVER_GIT = https://github.com/Duckbox-Developers/driver.git
+
+TDT_GIT ?= $(GITORIOUS)lexandr0s/tdt-neutrino-mp-sdl.git
+
+TDT_GIT
