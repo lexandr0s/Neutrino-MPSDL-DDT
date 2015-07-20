@@ -4,8 +4,8 @@ SYSTEM_PKGS = neutrino-pkg minimal-system-pkgs
 SYSTEM_OPKGS =
 
 # additional stuff which is useful on most systems
-SYSTEM_PKGS  += alsa-lib libxml2 libbluray e2fsprogs
-SYSTEM_OPKGS += libbluray e2fsprogs
+SYSTEM_PKGS  += alsa-lib libxml2 libbluray e2fsprogs openssl libncurses libglib mc nano
+SYSTEM_OPKGS += libbluray e2fsprogs openssl-libs libncurses libglib mc nano
 
 glibc-pkg: $(TARGETPREFIX)/sbin/ldconfig
 	rm -rf $(PKGPREFIX)
@@ -167,14 +167,13 @@ PHONY += td-module-pkg td-directfb-pkg
 SYSTEM_PKGS += td-module-pkg td-directfb-pkg td-dvb-wrapper-pkg addon-drivers-pkg
 endif
 ifeq ($(PLATFORM), spark)
-SYSTEM_PKGS += spark-drivers-pkg spark7162-drivers-pkg lirc
+#SYSTEM_PKGS += spark-drivers-pkg spark7162-drivers-pkg lirc
+SYSTEM_PKGS += spark-drivers-pkg lirc
 SYSTEM_OPKGS += spark-drivers lirc
 
-$(TARGETPREFIX)/mymodules/lib \
-$(TARGETPREFIX)/mymodules-7162/lib: | sparkkernel sparkdriver
+$(TARGETPREFIX)/mymodules/lib: | sparkkernel sparkdriver
 
 spark-drivers-pkg: $(TARGETPREFIX)/mymodules/lib |$(HOSTPREFIX)/bin/opkg-module-deps.sh sparkfirmware
-ifeq ($(SPARK7162_ONLY), )
 	$(REMOVE)/spark-drivers $(PKGPREFIX)
 	mkdir $(PKGPREFIX)
 	cp -a $(TARGETPREFIX)/mymodules/lib $(PKGPREFIX)
@@ -185,21 +184,8 @@ ifeq ($(SPARK7162_ONLY), )
 	opkg-module-deps.sh $(PKGPREFIX) $(BUILD_TMP)/spark-drivers/control
 	DONT_STRIP=1 PKG_VER=$(KVERSION_FULL) $(OPKG_SH) $(BUILD_TMP)/spark-drivers
 	$(REMOVE)/spark-drivers $(PKGPREFIX)
-endif
 
-spark7162-drivers-pkg: $(TARGETPREFIX)/mymodules-7162/lib |$(HOSTPREFIX)/bin/opkg-module-deps.sh sparkfirmware
-ifeq ($(SPARK_ONLY), )
-	$(REMOVE)/spark7162-drivers $(PKGPREFIX)
-	mkdir $(PKGPREFIX)
-	cp -a $(TARGETPREFIX)/mymodules-7162/lib $(PKGPREFIX)
-	rm -fr $(PKGPREFIX)/lib/modules/$(KVERSION_FULL)/kernel/fs/autofs4
-	rm -f $(PKGPREFIX)/lib/modules/$(KVERSION_FULL)/{build,source}
-	rm -f $(PKGPREFIX)/lib/modules/$(KVERSION_FULL)/modules.* # we call depmod after install
-	cp -a $(CONTROL_DIR)/spark7162-drivers $(BUILD_TMP)
-	opkg-module-deps.sh $(PKGPREFIX) $(BUILD_TMP)/spark7162-drivers/control
-	DONT_STRIP=1 PKG_VER=$(KVERSION_FULL) $(OPKG_SH) $(BUILD_TMP)/spark7162-drivers
-	$(REMOVE)/spark7162-drivers $(PKGPREFIX)
-endif
+
 
 ## libpng14 does not belong here, but it saves me from building it right now
 spark-directfb-pkg: \
@@ -320,7 +306,7 @@ spark-system-usb:
 		cp -a script.img uImage* sparksystem/p1; \
 		cp -a install sparksystem/p2; \
 		cp -a script.img sparksystem/p2/boot; \
-		cp -a uImage-7162 sparksystem/p2/boot/uImage; \
+		cp -a uImage sparksystem/p2/boot; \
 		cd sparksystem; \
 		tar -czf p1.tar.gz --owner=0 --group=0 -C p1 .; \
 		tar -czf p2.tar.gz --owner=0 --group=0 -C p2 .

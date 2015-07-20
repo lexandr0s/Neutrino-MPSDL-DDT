@@ -63,6 +63,7 @@ CROSS_BUILD_DIR = $(CROSS_BUILD_VER:-tls=)
 
 ARCHIVE      = $(BASE_DIR)/download
 PATCHES      = $(BASE_DIR)/archive-patches
+K_PATCHES    = $(BASE_DIR)/archive-patches/kernel
 BUILD_TMP    = $(BASE_DIR)/build_tmp
 D            = $(BASE_DIR)/deps
 # backwards compatibility
@@ -191,6 +192,12 @@ else
 TDT_GIT ?= $(GITORIOUS)lexandr0s/tdt-neutrino-mp-sdl.git
 TDT_SRC ?= $(SOURCE_DIR)/tdt
 endif
+
+DRIVER_SRC ?= $(SOURCE_DIR)/tdt-driver
+
+APPS_SRC ?= $(SOURCE_DIR)/apps
+
+
 
 ######### default to non-verbose builds for most packages...
 V ?= 0

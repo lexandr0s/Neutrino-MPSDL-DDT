@@ -26,7 +26,7 @@ K_DEP = $(D)/cskernel
 K_OBJ = $(BUILD_TMP)/kobj
 endif
 ifeq ($(PLATFORM), spark)
-KVERSION = 2.6.32.57
+#KVERSION = 2.6.32.57
 KVERSION_FULL = $(KVERSION)_stm24$(PATCH_STR)
 KVERSION_SRC = $(KVERSION_FULL)
 K_OBJ = $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
@@ -286,87 +286,191 @@ endif
 
 ifeq ($(PLATFORM), spark)
 TMP_KDIR=$(BUILD_TMP)/linux-2.6.32
-TDT_PATCHES=$(TDT_SRC)/tdt/cvs/cdk/Patches
+#TDT_PATCHES=$(TDT_SRC)/tdt/cvs/cdk/Patches
 
-MY_KERNELPATCHES = $(PATCHES)/0001-bpa2-ignore-bigphysarea-kernel-parameter.patch
-ifeq ($(PATCH_STR),"_0209")
-MY_KERNELPATCHES += $(PATCHES)/0001-spark-fix-buffer-overflow-in-lirc_stm.patch
-endif
+#MY_KERNELPATCHES = $(PATCHES)/0001-bpa2-ignore-bigphysarea-kernel-parameter.patch
+#ifeq ($(PATCH_STR),"_0209")
+#MY_KERNELPATCHES += $(PATCHES)/0001-spark-fix-buffer-overflow-in-lirc_stm.patch
+#endif
 
 # this is ugly, but easier than changing the way the tdt patches are applied.
 # The reason for this patch is, that the spark_setup and spark7162_setup patches
 # can not both be applied, because they overlap in a single file. The spark7162
 # patch has everything that's needed in this file, so I partly revert the former...
-$(TDT_PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch: \
-		$(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch
-	ln -sf $(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch $(TDT_PATCHES)
+#$(TDT_PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch: \
+#		$(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch
+#	ln -sf $(PATCHES)/linux-sh4-seife-revert-spark_setup_stmmac_mdio.patch $(TDT_PATCHES)
 
 # if you only want to build for one version, set SPARK_ONLY=1 or SPARK7162_ONLY=1 in config
 SPARKKERNELDEPS =
 ifeq ($(SPARK7162_ONLY), )
-SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark
+SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark$(PATCH_STR)
 endif
 ifeq ($(SPARK_ONLY), )
-SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark7162
+SPARKKERNELDEPS += $(PATCHES)/kernel.config-spark7162$(PATCH_STR)
 endif
 
-$(BUILD_TMP)/linux-$(KVERSION_SRC): \
-		$(STL_ARCHIVE)/stlinux24-host-kernel-source-sh4-$(KVERSION_FULL)-$(subst _0,,$(PATCH_STR)).src.rpm \
-		$(MY_KERNELPATCHES) \
-		$(SPARK_PATCHES_24:%=$(TDT_PATCHES)/%) \
-		$(SPARKKERNELDEPS)
-	unpack-rpm.sh $(BUILD_TMP) "" $(BUILD_TMP)/ksrc $<
-	rm -fr $(TMP_KDIR)
-	tar -C $(BUILD_TMP) -xf $(BUILD_TMP)/ksrc/linux-2.6.32.tar.bz2
-	set -e; cd $(TMP_KDIR); \
-		bzcat $(BUILD_TMP)/ksrc/linux-$(KVERSION).patch.bz2 | patch -p1 ;\
-		bzcat $(BUILD_TMP)/ksrc/linux-$(KVERSION)_stm24_sh4$(PATCH_STR).patch.bz2 | patch -p1; \
-		for i in $(SPARK_PATCHES_24); do \
+
+ifeq ($(PATCH_STR),_0209)
+HOST_KERNEL_REVISION = 8c676f1a85935a94de1fb103c0de1dd25ff69014
+endif
+ifeq ($(PATCH_STR),_0211)
+HOST_KERNEL_REVISION = 3bce06ff873fb5098c8cd21f1d0e8d62c00a4903
+endif
+ifeq ($(PATCH_STR),_0214)
+HOST_KERNEL_REVISION = 5cf7f6f209d832a4cf645125598f86213f556fb3
+endif
+ifeq ($(PATCH_STR),_0215)
+HOST_KERNEL_REVISION = 5384bd391266210e72b2ca34590bd9f543cdb5a3
+endif
+ifeq ($(PATCH_STR),_0217)
+HOST_KERNEL_REVISION = b43f8252e9f72e5b205c8d622db3ac97736351fc
+endif
+
+
+
+COMMONPATCHES_24 = \
+		linux-kbuild-generate-modules-builtin_stm24$(PATCH_STR).patch \
+		linux-sh4-linuxdvb_stm24$(PATCH_STR).patch \
+		linux-sh4-sound_stm24$(PATCH_STR).patch \
+		linux-sh4-time_stm24$(PATCH_STR).patch \
+		linux-sh4-init_mm_stm24$(PATCH_STR).patch \
+		linux-sh4-copro_stm24$(PATCH_STR).patch \
+		linux-sh4-strcpy_stm24$(PATCH_STR).patch \
+		linux-sh4-ext23_as_ext4_stm24$(PATCH_STR).patch \
+		linux-sh4-bpa2_procfs_stm24$(PATCH_STR).patch \
+		linux-ftdi_sio.c_stm24$(PATCH_STR).patch \
+		linux-sh4-lzma-fix_stm24$(PATCH_STR).patch \
+		linux-tune_stm24.patch \
+		linux-sh4-permit_gcc_command_line_sections_stm24.patch \
+		linux-sh4-mmap_stm24.patch
+
+		
+		
+		
+ifeq ($(PATCH_STR),_0209)
+COMMONPATCHES_24 += linux-sh4-makefile_stm24.patch \
+		linux-sh4-dwmac_stm24_0209.patch \
+		linux-sh4-directfb_stm24$(PATCH_STR).patch
+endif	
+		
+ifeq ($(PATCH_STR),_0211)
+COMMONPATCHES_24 += linux-sh4-console_missing_argument_stm24$(PATCH_STR).patch
+endif		
+
+ifeq ($(PATCH_STR),_0215)
+COMMONPATCHES_24 += linux-ratelimit-bug_stm24$(PATCH_STR).patch \
+		linux-patch_swap_notify_core_support_stm24$(PATCH_STR).patch \
+		linux-sh4-console_missing_argument_stm24$(PATCH_STR).patch
+endif		
+		
+ifeq ($(PATCH_STR),_0217)
+COMMONPATCHES_24 += linux-defined_is_deprecated_timeconst.pl_stm24$(PATCH_STR).patch \
+		linux-perf-warning-fix_stm24$(PATCH_STR).patch \
+		linux-ratelimit-bug_stm24$(PATCH_STR).patch \
+		linux-patch_swap_notify_core_support_stm24$(PATCH_STR).patch \
+		linux-sh4-console_missing_argument_stm24$(PATCH_STR).patch
+endif		
+
+
+SPARK_PATCHES_24 = $(COMMONPATCHES_24) \
+		linux-sh4-stmmac_stm24$(PATCH_STR).patch \
+		linux-sh4-lmb_stm24$(PATCH_STR).patch \
+		linux-sh4-spark_setup_stm24$(PATCH_STR).patch
+		
+
+		
+ifeq ($(PATCH_STR),_0209)
+SPARK_PATCHES_24 += linux-sh4-linux_yaffs2_stm24_0209.patch \
+		linux-sh4-lirc_stm.patch 
+endif		
+		
+ifeq ($(PATCH_STR),_0211)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif		
+
+ifeq ($(PATCH_STR),_0214)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif
+
+ifeq ($(PATCH_STR),_0215)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif
+
+ifeq ($(PATCH_STR),_0217)
+SPARK_PATCHES_24 += linux-sh4-lirc_stm_stm24$(PATCH_STR).patch
+endif
+
+SPARK7162_PATCHES_24 = $(COMMONPATCHES_24) \
+		linux-sh4-stmmac_stm24$(PATCH_STR).patch \
+		linux-sh4-lmb_stm24$(PATCH_STR).patch \
+		linux-sh4-spark7162_setup_stm24$(PATCH_STR).patch
+
+
+		
+ifeq ($(N_BOX),spark)
+KERNELPATCHES_24 = $(SPARK_PATCHES_24)
+K_CONF = $(PATCHES)/kernel.config-spark$(PATCH_STR)
+endif	
+
+ifeq ($(N_BOX),spark7162)
+KERNELPATCHES_24 = $(SPARK7162_PATCHES_24)
+K_CONF = $(PATCHES)/kernel.config-spark7162$(PATCH_STR)
+endif	
+
+
+
+envkern:
+	echo $(K_CONF)
+
+$(BUILD_TMP)/linux-$(KVERSION_SRC): $(SPARKKERNELDEPS) \
+		$(KERNELPATCHES_24:%=$(K_PATCHES)/%)
+		rm -fr $(TMP_KDIR)
+		REPO=git://git.stlinux.com/stm/linux-sh4-2.6.32.y.git;protocol=git;branch=stmicro; \
+		[ -d "$(ARCHIVE)/linux-sh4-2.6.32.y.git" ] && \
+		(echo "Updating STlinux kernel source"; cd $(ARCHIVE)/linux-sh4-2.6.32.y.git; git pull;); \
+		[ -d "$(ARCHIVE)/linux-sh4-2.6.32.y.git" ] || \
+		(echo "Getting STlinux kernel source"; git clone -n $$REPO $(ARCHIVE)/linux-sh4-2.6.32.y.git); \
+		(echo "Copying kernel source code to build environment"; cp -ra $(ARCHIVE)/linux-sh4-2.6.32.y.git $(TMP_KDIR)); \
+		(echo "Applying patch level $(PATCH_STR)"; cd $(TMP_KDIR); git checkout -q $(HOST_KERNEL_REVISION))
+		set -e; cd $(TMP_KDIR); \
+		for i in $(KERNELPATCHES_24); do \
 			echo "==> Applying Patch: $$i"; \
-			patch -p1 -i $(TDT_PATCHES)/$$i; \
-		done; \
-		for i in $(MY_KERNELPATCHES); do \
-			echo "==> Applying Patch: $(subst $(PATCHES)/,'',$$i)"; \
-			patch -p1 -i $$i; \
-		done; \
-		cp $(PATCHES)/kernel.config-spark     .config-spark; \
-		cp $(PATCHES)/kernel.config-spark7162 .config-7162; \
-		sed -i "s#^\(CONFIG_EXTRA_FIRMWARE_DIR=\).*#\1\"$(TDT_SRC)/tdt/cvs/cdk/integrated_firmware\"#" .config-*;
-	rm -fr $@ $@-7162
+			patch -p1 -i $(K_PATCHES)/$$i; \
+		done;
+		
+	cp -af $(K_CONF) $(TMP_KDIR)/.config
+	sed -i "s#^\(CONFIG_EXTRA_FIRMWARE_DIR=\).*#\1\"$(TDT_SRC)/tdt/cvs/cdk/integrated_firmware\"#" .config
 	mv $(BUILD_TMP)/linux-2.6.32 $@
-	cp -al $@ $@-7162 # hardlinked tree
-	mv $@/.config-spark $@/.config
-	mv $@-7162/.config-7162 $@-7162/.config
+	
 	# this allows to compile old 0209 kernel with 0210 config without questions...
 	echo "CONFIG_HW_GLITCH_WIDTH=1" >> $@/.config
-	echo "CONFIG_HW_GLITCH_WIDTH=1" >> $@-7162/.config
+	#echo "CONFIG_HW_GLITCH_WIDTH=1" >> $@-7162/.config
 	$(MAKE) -C $@ ARCH=sh oldconfig
 	$(MAKE) -C $@ ARCH=sh include/asm
 	$(MAKE) -C $@ ARCH=sh include/linux/version.h
 	$(MAKE) -C $@ ARCH=sh CROSS_COMPILE=$(TARGET)- modules_prepare
-	$(MAKE) -C $@-7162 ARCH=sh oldconfig
-	$(MAKE) -C $@-7162 ARCH=sh include/asm
-	$(MAKE) -C $@-7162 ARCH=sh include/linux/version.h
-	$(MAKE) -C $@-7162 ARCH=sh CROSS_COMPILE=$(TARGET)- modules_prepare
+	#$(MAKE) -C $@-7162 ARCH=sh oldconfig
+	#$(MAKE) -C $@-7162 ARCH=sh include/asm
+	#$(MAKE) -C $@-7162 ARCH=sh include/linux/version.h
+	#$(MAKE) -C $@-7162 ARCH=sh CROSS_COMPILE=$(TARGET)- modules_prepare
 
-kernelmenuconfig: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
+#kernelmenuconfig: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
+kernelmenuconfig: $(BUILD_TMP)/linux-$(KVERSION_SRC)
 	make -C$^ ARCH=sh CROSS_COMPILE=$(TARGET)- menuconfig
 
-_sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
-	set -e; cd $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA); \
+#_sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
+_sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)
+	set -e; cd $(BUILD_TMP)/linux-$(KVERSION_SRC); \
 		export PATH=$(CROSS_BASE)/host/bin:$(PATH); \
 		$(MAKE) ARCH=sh CROSS_COMPILE=$(TARGET)- uImage modules; \
 		make    ARCH=sh CROSS_COMPILE=$(TARGET)- \
-			INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules$(K_EXTRA) modules_install; \
-		cp -L arch/sh/boot/uImage $(BUILD_TMP)/uImage$(K_EXTRA)
+			INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules modules_install; \
+		cp -L arch/sh/boot/uImage $(BUILD_TMP)/uImage
 
 sparkkernel: $(BUILD_TMP)/linux-$(KVERSION_SRC)
-ifeq ($(SPARK7162_ONLY), )
 	$(MAKE) _sparkkernel
-endif
-ifeq ($(SPARK_ONLY), )
-	$(MAKE) _sparkkernel K_EXTRA=-7162
-endif
+
 
 $(TARGETPREFIX)/include/linux/dvb:
 	mkdir -p $@
@@ -389,9 +493,8 @@ $(TARGETPREFIX)/include/linux/dvb:
 $(BUILD_TMP)/tdt-driver: \
 $(PATCHES)/sparkdrivers/0004-stmfb-silence-kmsg-spam.patch \
 | $(TARGETPREFIX)/include/linux/dvb
-	rm -fr $@ $@-7162
-#	cp -a $(SOURCE_DIR)/tdt-driver $(BUILD_TMP)
-	cp -a $(SOURCE_DIR)/tdt/tdt/cvs/driver $(BUILD_TMP)/tdt-driver
+	cp -a $(SOURCE_DIR)/tdt-driver $(BUILD_TMP)
+#	cp -a $(SOURCE_DIR)/tdt/tdt/cvs/driver $(BUILD_TMP)/tdt-driver
 	set -e; cd $@; \
 		for i in $^; do \
 			test -d $$i && continue; \
@@ -411,51 +514,54 @@ $(PATCHES)/sparkdrivers/0004-stmfb-silence-kmsg-spam.patch \
 		cd ../stgfb; \
 		rm -f stmfb; \
 		ln -s stmfb-3.1_stm24_0102 stmfb; \
-		cp -a stmfb/linux/drivers/video/stmfb.h $(TARGETPREFIX)/include/linux
-	cp -a $@/frontcontroller/aotom/aotom_main.h $(TARGETPREFIX)/include
+	cp -a stmfb/linux/drivers/video/stmfb.h $(TARGETPREFIX)/include/linux
+	cp -a $@/frontcontroller/aotom_spark/aotom_main.h $(TARGETPREFIX)/include
+	cp -ar $@/include/player2_191/* $@/player2/components/include
 	# disable wireless build
 	# sed -i 's/^\(obj-y.*+= wireless\)/# \1/' $@/Makefile
 	# disable led and button - it's not for spark
 	sed -i 's@^\(obj-y.*+= \(led\|button\)/\)@# \1@' $@/Makefile
-	cp -al $@ $@-7162
+#	cp -al $@ $@-7162
 
 # CONFIG_MODULES_PATH= is needed because the Makefile contains
 # "-I$(CONFIG_MODULES_PATH)/usr/include". With CONFIG_MODULES_PATH unset,
 # host system includes are used and that might be fatal.
-_sparkdriver: $(BUILD_TMP)/tdt-driver$(K_EXTRA) | $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA)
-	$(MAKE) -C $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) ARCH=sh \
+_sparkdriver: $(BUILD_TMP)/tdt-driver | $(BUILD_TMP)/linux-$(KVERSION_SRC)
+	$(MAKE) -C $(BUILD_TMP)/linux-$(KVERSION_SRC) ARCH=sh \
 		CONFIG_MODULES_PATH=$(CROSS_DIR)/target \
-		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) \
-		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver$(K_EXTRA) \
+		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC) \
+		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver \
 		M=$(firstword $^) \
 		PLAYER191=player191 \
 		CROSS_COMPILE=$(TARGET)-
-	make    -C $(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) ARCH=sh \
+	make    -C $(BUILD_TMP)/linux-$(KVERSION_SRC) ARCH=sh \
 		CONFIG_MODULES_PATH=$(CROSS_DIR)/target \
-		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC)$(K_EXTRA) \
-		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver$(K_EXTRA) \
+		KERNEL_LOCATION=$(BUILD_TMP)/linux-$(KVERSION_SRC) \
+		DRIVER_TOPDIR=$(BUILD_TMP)/tdt-driver \
 		M=$(firstword $^) \
 		PLAYER191=player191 \
 		CROSS_COMPILE=$(TARGET)- \
-		INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules$(K_EXTRA) modules_install
+		INSTALL_MOD_PATH=$(TARGETPREFIX)/mymodules modules_install
 
 sparkdriver:
-ifeq ($(SPARK7162_ONLY), )
-	$(MAKE) _sparkdriver SPARK=1
+ifeq ($(N_BOX),spark)
+	$(MAKE) _sparkdriver SPARK=1 WLANDRIVER=1
 endif
-ifeq ($(SPARK_ONLY), )
-	$(MAKE) _sparkdriver SPARK7162=1 K_EXTRA=-7162
-	find $(TARGETPREFIX)/mymodules-7162 -name stmcore-display-sti7106.ko | \
+ifeq ($(N_BOX),spark7162)
+	$(MAKE) _sparkdriver SPARK7162=1 WLANDRIVER=1
+	find $(TARGETPREFIX)/mymodules -name stmcore-display-sti7106.ko | \
 		xargs -r rm # we don't have a 7106 chip
 endif
 
 sparkfirmware: $(STL_ARCHIVE)/stlinux24-sh4-stmfb-firmware-1.20-1.noarch.rpm
 	unpack-rpm.sh $(BUILD_TMP) $(STM_RELOCATE)/devkit/sh4/target $(TARGETPREFIX)/mymodules $^
-	unpack-rpm.sh $(BUILD_TMP) $(STM_RELOCATE)/devkit/sh4/target $(TARGETPREFIX)/mymodules-7162 $^
+ifeq ($(N_BOX),spark)
 	ln -sf component_7111_mb618.fw	 $(TARGETPREFIX)/mymodules/lib/firmware/component.fw
-	ln -sf component_7105_hdk7105.fw $(TARGETPREFIX)/mymodules-7162/lib/firmware/component.fw
-	ln -sf fdvo0_7105.fw		 $(TARGETPREFIX)/mymodules-7162/lib/firmware/fdvo0.fw
-
+endif
+ifeq ($(N_BOX),spark7162)
+	ln -sf component_7105_hdk7105.fw $(TARGETPREFIX)/mymodules/lib/firmware/component.fw
+	ln -sf fdvo0_7105.fw		 $(TARGETPREFIX)/mymodules/lib/firmware/fdvo0.fw
+endif
 
 endif
 

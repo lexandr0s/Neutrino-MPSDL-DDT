@@ -213,8 +213,8 @@ $(ARCHIVE)/linux-2.6.34.13.tar.xz:
 $(ARCHIVE)/linux-3.9.2.tar.xz:
 	$(WGET) http://www.kernel.org/pub/linux/kernel/v3.x/$(notdir $@)
 
-$(ARCHIVE)/mc-$(MC-VER).tar.gz:
-	$(WGET) http://midnight-commander.org/downloads/mc-$(MC-VER).tar.gz
+$(ARCHIVE)/mc-$(MC-VER).tar.bz2:
+	$(WGET) http://midnight-commander.org/downloads/mc-$(MC-VER).tar.bz2
 
 $(ARCHIVE)/nbench-byte-$(NBENCH_BYTE-VER).tar.gz:
 	$(WGET) http://www.tux.org/~mayer/linux/nbench-byte-$(NBENCH_BYTE-VER).tar.gz

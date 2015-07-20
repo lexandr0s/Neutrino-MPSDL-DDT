@@ -13,12 +13,17 @@ ifeq ($(PLATFORM), coolstream)
 PREQS += cs-sources
 endif
 ifeq ($(PLATFORM), spark)
-PREQS += $(TDT_SRC)
+#PREQS += $(TDT_SRC)
 #PREQS += $(SOURCE_DIR)/tdt-driver
 endif
 ifeq ($(USE_STB_HAL), yes)
 PREQS += $(SOURCE_DIR)/libstb-hal
 endif
+
+PREQS += $(DRIVER_SRC)
+
+PREQS += $(APPS_SRC)
+
 
 preqs: $(PREQS)
 
@@ -49,7 +54,7 @@ $(SOURCE_DIR)/neutrino-mp:
 	@echo ' ============================================================================== '
 	mkdir -p $(SOURCE_DIR)
 	cd $(SOURCE_DIR) && \
-		git clone $(GITORIOUS)lexandr0s/neutrino-mp.git neutrino-mp
+		git clone $(N_GIT) neutrino-mp
 
 $(SOURCE_DIR)/neutrino-hd-td:
 	@echo ' ============================================================================== '
@@ -63,7 +68,7 @@ $(SOURCE_DIR)/libstb-hal:
 	@echo "=== cloning libstb-hal ==="
 	mkdir -p $(SOURCE_DIR)
 	cd $(SOURCE_DIR) && \
-		git clone $(GITORIOUS)lexandr0s/libstb-hal.git  libstb-hal
+		git clone $(LH_GIT) libstb-hal
 
 $(PLUGIN_DIR):
 	mkdir -p $(SOURCE_DIR)
@@ -161,3 +166,13 @@ tdsvn: $(TD_SVN)
 $(TDT_SRC):
 	set -e; cd $(SOURCE_DIR); \
 		git clone $(TDT_GIT) tdt
+		
+$(DRIVER_SRC):
+	set -e; cd $(SOURCE_DIR); \
+		git clone $(DRIVER_GIT) tdt-driver
+		
+$(APPS_SRC):
+	set -e; cd $(SOURCE_DIR); \
+		git clone $(APPS_GIT) apps
+		
+		
